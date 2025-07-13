@@ -26,8 +26,10 @@ vim.opt.background = "dark"
 vim.cmd.highlight("Normal", "guibg=#000000")
 
 vim.keymap.set("n", "<leader>r", function()
-	vim.cmd('vsplit | terminal g++ "%:p" -o a.out && ./a.out')
-end)
+	vim.cmd(
+		[[vsplit | terminal bash -c 'start=$(date +%s.%N); g++ "%:p" -o a.out && ./a.out; end=$(date +%s.%N); echo; echo -n "⏱️ Time taken: "; echo "$(echo "$end - $start" | bc) seconds"' ]]
+	)
+end, { desc = "Quick compile & run C++ with clean timing" })
 
 -- 🚀 Super Flashy Cursor Setup with Per-Mode Color + Blinking
 vim.opt.guicursor = {
