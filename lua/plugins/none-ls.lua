@@ -1,29 +1,42 @@
--- Customize None-ls sources
+-- File: lua/plugins/none-ls.lua
 
 ---@type LazySpec
 return {
-  "nvimtools/none-ls.nvim",
-  opts = function(_, opts)
-    -- opts variable is the default configuration table for the setup function call
-    local null_ls = require "null-ls"
+	"nvimtools/none-ls.nvim",
+	dependencies = { "nvim-lua/plenary.nvim" },
+	opts = function(_, opts)
+		local null_ls = require("null-ls")
 
-    -- Check supported formatters and linters
-    -- https://github.com/nvimtools/none-ls.nvim/tree/main/lua/null-ls/builtins/formatting
-    -- https://github.com/nvimtools/none-ls.nvim/tree/main/lua/null-ls/builtins/diagnostics
+		opts.sources = require("astrocore").list_insert_unique(opts.sources, {
+			-- Blade formatter
+			null_ls.builtins.formatting.blade_formatter.with({
+				command = "blade-formatter",
+				args = {
+					"-i",
+					vim.opt.tabstop:get(),
+					"--sort-tailwindcss-classes",
+					"--indent-inner-html",
+					"--write",
+					"$FILENAME",
+				},
+			}),
 
-    opts.sources = require("astrocore").list_insert_unique(opts.sources, {
-      -- Set a formatter
-      null_ls.builtins.formatting.blade_formatter.with {
-        command = "blade-formatter",
-        args = {
-          "-i",
-          vim.opt.tabstop:get(),
-          "--sort-tailwindcss-classes",
-          "--indent-inner-html",
-          "--write",
-          "$FILENAME",
-        },
-      },
-    })
-  end,
+			-- Prettier (for PHP/HTML/JS)
+			null_ls.builtins.formatting.prettier.with({
+				extra_filetypes = { "php", "html" },
+			}),
+		})
+	end,
+
+	config = function(_, opts)
+		local null_ls = require("null-ls")
+		null_ls.setup(opts)
+
+		-- Auto format on save
+		vim.api.nvim_create_autocmd("BufWritePre", {
+			callback = function(args)
+				vim.lsp.buf.format({ bufnr = args.buf })
+			end,
+		})
+	end,
 }
